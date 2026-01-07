@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Ubenplay",
-    "slug": "ubenplay",
+    "name": "WebView App",
+    "slug": "webview-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,41 +16,17 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.uben.play"
+      "bundleIdentifier": "com.app.webview"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.uben.play"
+      "package": "com.app.webview"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "websiteUrl": "https://play.uben.in/",
-      "enableNavigation": true,
-      "navItems": [
-        {
-          "id": "1",
-          "label": "Home",
-          "url": "/home",
-          "icon": "home"
-        },
-        {
-          "id": "1767796630011",
-          "label": "Account",
-          "url": "/login",
-          "icon": "user"
-        },
-        {
-          "id": "1767796631113",
-          "label": "Import",
-          "url": "/import-video",
-          "icon": "settings"
-        }
-      ]
     }
   }
 }
