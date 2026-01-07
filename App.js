@@ -1,13 +1,13 @@
 import React from 'react';
-import { StatusBar, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import { StatusBar, StyleSheet, View, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 const WEBSITE_URL = 'https://example.com';
 
 function WebViewScreen({ url = WEBSITE_URL }) {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <WebView
         source={{ uri: url }}
         style={styles.webview}
@@ -17,8 +17,9 @@ function WebViewScreen({ url = WEBSITE_URL }) {
         scalesPageToFit={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
+        allowsFullscreenVideo={true}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -29,10 +30,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    backgroundColor: '#000',
   },
   webview: {
     flex: 1,
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 });
