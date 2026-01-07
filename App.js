@@ -2,9 +2,10 @@ import React from 'react';
 import { StatusBar, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 
-const WEBSITE_URL = 'https://example.com';
 
-function WebViewScreen({ url = WEBSITE_URL }) {
+
+
+function WebViewScreen({ url = 'https://lovable.dev' }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -23,6 +24,7 @@ function WebViewScreen({ url = WEBSITE_URL }) {
 }
 
 export default function App() {
+  
   return <WebViewScreen />;
 }
 
