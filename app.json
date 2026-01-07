@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Testapp",
-    "slug": "testapp",
+    "name": "Ubenplay",
+    "slug": "ubenplay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,26 +16,26 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.test.app"
+      "bundleIdentifier": "com.uben.playapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.test.app"
+      "package": "com.uben.playapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "websiteUrl": "https://lovable.dev",
-      "enableNavigation": false,
+      "websiteUrl": "https://play.uben.in/",
+      "enableNavigation": true,
       "navItems": [
         {
           "id": "1",
           "label": "Home",
-          "url": "/",
+          "url": "/home",
           "icon": "home"
         }
       ]
