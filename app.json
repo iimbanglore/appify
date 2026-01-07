@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "WebView App",
-    "slug": "webview-app",
+    "name": "Testapp",
+    "slug": "testapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,17 +16,29 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.app.webview"
+      "bundleIdentifier": "com.test.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.app.webview"
+      "package": "com.test.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "websiteUrl": "https://lovable.dev",
+      "enableNavigation": false,
+      "navItems": [
+        {
+          "id": "1",
+          "label": "Home",
+          "url": "/",
+          "icon": "home"
+        }
+      ]
     }
   }
 }
