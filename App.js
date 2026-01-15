@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
-const navItems = [{"id":"1","label":"Home","url":"/","icon":"home"},{"id":"1768486135726","label":"Account","url":"/account","icon":"user"},{"id":"1768486242934","label":"Cart","url":"/cart","icon":"cart"}];
+const navItems = [{"id":"1","label":"Home","url":"/","icon":"home"},{"id":"1768487366525","label":"Cart","url":"/cart","icon":"cart"},{"id":"1768487367355","label":"Account","url":"/account","icon":"user"}];
 
 function WebViewScreen({ url }) {
   const [refreshing, setRefreshing] = useState(false);
@@ -39,7 +39,7 @@ function WebViewScreen({ url }) {
             onRefresh={onRefresh}
             tintColor="#007AFF"
             colors={['#007AFF']}
-            progressBackgroundColor="#ffffff"
+            progressBackgroundColor="#1a1a1a"
           />
         }
       >
@@ -75,7 +75,7 @@ function AppNavigator() {
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: { backgroundColor: '#ffffff', borderTopColor: '#333' },
+        tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#333' },
         tabBarLabelStyle: { fontSize: 11 },
       })}
     >
