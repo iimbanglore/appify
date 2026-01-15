@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.favstore.shop"
+      "bundleIdentifier": "com.favstore.shopp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.favstore.shop"
+      "package": "com.favstore.shopp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,16 +39,16 @@
           "icon": "home"
         },
         {
-          "id": "1768486135726",
-          "label": "Account",
-          "url": "/account",
-          "icon": "user"
-        },
-        {
-          "id": "1768486242934",
+          "id": "1768487366525",
           "label": "Cart",
           "url": "/cart",
           "icon": "cart"
+        },
+        {
+          "id": "1768487367355",
+          "label": "Account",
+          "url": "/account",
+          "icon": "user"
         }
       ]
     }
