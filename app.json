@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Ubenmusic",
-    "slug": "ubenmusic",
+    "name": "Tinkklebox",
+    "slug": "tinkklebox",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,39 +16,45 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.uben.music"
+      "bundleIdentifier": "com.tinnklebox.shop"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.uben.music"
+      "package": "com.tinnklebox.shop"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "websiteUrl": "https://music.uben.in",
+      "websiteUrl": "https://tinkklebox.com/",
       "enableNavigation": true,
       "navItems": [
         {
           "id": "1",
-          "label": "Top",
-          "url": "/channels/top-trend",
-          "icon": "music"
+          "label": "Home",
+          "url": "/",
+          "icon": "home"
         },
         {
-          "id": "1768586936343",
-          "label": "Trend",
-          "url": "/channel/hit2023",
-          "icon": "music"
-        },
-        {
-          "id": "1768586937540",
-          "label": "Account",
-          "url": "/login",
+          "id": "1768593298211",
+          "label": "Profile",
+          "url": "https://account.tinkklebox.com/?locale=en&region_country=IN",
           "icon": "user"
+        },
+        {
+          "id": "1768593299990",
+          "label": "Collection",
+          "url": "/collections",
+          "icon": "heart"
+        },
+        {
+          "id": "1768593379346",
+          "label": "Cart",
+          "url": "/cart",
+          "icon": "cart"
         }
       ]
     }
