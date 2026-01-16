@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const Tab = createBottomTabNavigator();
 
-const navItems = [{"id":"1","label":"Top","url":"/channels/top-trend","icon":"music"},{"id":"1768586936343","label":"Trend","url":"/channel/hit2023","icon":"music"},{"id":"1768586937540","label":"Account","url":"/login","icon":"user"}];
+const navItems = [{"id":"1","label":"Home","url":"/","icon":"home"},{"id":"1768593298211","label":"Profile","url":"https://account.tinkklebox.com/?locale=en&region_country=IN","icon":"user"},{"id":"1768593299990","label":"Collection","url":"/collections","icon":"heart"},{"id":"1768593379346","label":"Cart","url":"/cart","icon":"cart"}];
 
 function WebViewScreen({ url }) {
   const [refreshing, setRefreshing] = useState(false);
@@ -27,7 +27,7 @@ function WebViewScreen({ url }) {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#f3f1f2" />
+          <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       )}
@@ -37,8 +37,8 @@ function WebViewScreen({ url }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#f3f1f2"
-            colors={['#f3f1f2']}
+            tintColor="#007AFF"
+            colors={['#007AFF']}
             progressBackgroundColor="#1a1a1a"
           />
         }
@@ -73,7 +73,7 @@ function AppNavigator() {
           const item = navItems.find(n => n.label === route.name);
           return <Ionicons name={item?.icon || 'home'} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#f3f1f2',
+        tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#333' },
         tabBarLabelStyle: { fontSize: 11 },
@@ -83,7 +83,7 @@ function AppNavigator() {
         <Tab.Screen 
           key={index}
           name={item.label} 
-          children={() => <WebViewScreen url={"https://music.uben.in" + item.url} />}
+          children={() => <WebViewScreen url={"https://tinkklebox.com/" + item.url} />}
         />
       ))}
     </Tab.Navigator>
