@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Favstore24",
-    "slug": "favstore24",
+    "name": "WebView App",
+    "slug": "webview-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -16,41 +16,17 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.favstore.shop"
+      "bundleIdentifier": "com.app.webview"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.favstore.shop"
+      "package": "com.app.webview"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "websiteUrl": "https://favstore24.com/en",
-      "enableNavigation": true,
-      "navItems": [
-        {
-          "id": "1",
-          "label": "Home",
-          "url": "/",
-          "icon": "home"
-        },
-        {
-          "id": "1769104834626",
-          "label": "Shop",
-          "url": "/categories/lcdtouch-folder-combo/products",
-          "icon": "cart"
-        },
-        {
-          "id": "1769104835750",
-          "label": "Account",
-          "url": "/account",
-          "icon": "user"
-        }
-      ]
     }
   }
 }
