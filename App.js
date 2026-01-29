@@ -1,8 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { StatusBar, StyleSheet, SafeAreaView, View, Text, ActivityIndicator, Platform, TouchableOpacity, Modal, BackHandler, Dimensions, PanResponder, Image, Animated } from 'react-native';
+import { StatusBar, StyleSheet, View, Text, ActivityIndicator, Platform, TouchableOpacity, Modal, BackHandler, Dimensions, PanResponder, Image, Animated } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,8 +9,6 @@ import * as SplashScreen from 'expo-splash-screen';
 // Prevent auto-hiding of splash screen
 SplashScreen.preventAutoHideAsync();
 
-const Tab = createBottomTabNavigator();
-const navItems = [{"id":"1","label":"Book","url":"https://ubenclick.neetoform.com/smartfinance","icon":"home"}];
 const BASE_DOMAIN = 'smartfin.ask2mesolution.com';
 const SYNC_INTERVAL = 30000;
 const PULL_THRESHOLD = 150;
@@ -20,36 +16,6 @@ const CACHE_KEY = 'OFFLINE_HTML_CACHE';
 const SPLASH_DURATION = 4000; // Show splash for 4 seconds
 const SPLASH_BG_COLOR = '#ffffff';
 const LOADING_TIMEOUT = 15000; // Force hide loading after 15 seconds
-
-// Icon mapping from Lucide to Ionicons
-const iconMap = {
-  'home': 'home',
-  'user': 'person',
-  'settings': 'settings',
-  'info': 'information-circle',
-  'menu': 'menu',
-  'cart': 'cart',
-  'search': 'search',
-  'notifications': 'notifications',
-  'heart': 'heart',
-  'mail': 'mail',
-  'calendar': 'calendar',
-  'camera': 'camera',
-  'music': 'musical-notes',
-  'video': 'videocam',
-  'map': 'map',
-  'phone': 'call',
-  'star': 'star',
-  'bookmark': 'bookmark',
-  'share': 'share-social',
-  'download': 'download',
-  'upload': 'cloud-upload',
-};
-
-const getIonIconName = (lucideIcon) => {
-  return iconMap[lucideIcon] || iconMap['home'] || 'home';
-};
-
 
 // Custom Splash Screen Component
 function CustomSplashScreen({ onFinish }) {
@@ -234,7 +200,7 @@ function InAppBrowser({ visible, url, onClose }) {
         </View>
         {browserLoading && (
           <View style={styles.browserLoading}>
-            <ActivityIndicator size="small" color="#ffffff" />
+            <ActivityIndicator size="small" color="#007AFF" />
           </View>
         )}
         <WebView
@@ -257,7 +223,7 @@ function InAppBrowser({ visible, url, onClose }) {
   );
 }
 
-function WebViewScreen({ url }) {
+function MainContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [browserUrl, setBrowserUrl] = useState('');
@@ -268,6 +234,7 @@ function WebViewScreen({ url }) {
   const [cachedHtml, setCachedHtml] = useState(null);
   const webViewRef = useRef(null);
   const lastSyncRef = useRef(Date.now());
+  const websiteUrl = 'https://smartfin.ask2mesolution.com/';
 
   // Network connectivity monitoring
   useEffect(() => {
@@ -283,10 +250,10 @@ function WebViewScreen({ url }) {
 
   // Load cached HTML on mount
   useEffect(() => {
-    AsyncStorage.getItem(CACHE_KEY + '_' + url).then(html => {
+    AsyncStorage.getItem(CACHE_KEY + '_main').then(html => {
       if (html) setCachedHtml(html);
     });
-  }, [url]);
+  }, []);
 
   // Loading timeout - force hide loading overlay after timeout
   useEffect(() => {
@@ -406,7 +373,7 @@ function WebViewScreen({ url }) {
       if (data.type === 'scroll') {
         setScrollY(data.y);
       } else if (data.type === 'cache' && data.html) {
-        AsyncStorage.setItem(CACHE_KEY + '_' + url, data.html);
+        AsyncStorage.setItem(CACHE_KEY + '_main', data.html);
         setCachedHtml(data.html);
       }
     } catch (e) {}
@@ -415,22 +382,22 @@ function WebViewScreen({ url }) {
   const getWebViewSource = () => {
     if (isOffline) {
       if (cachedHtml) {
-        return { html: cachedHtml, baseUrl: url };
+        return { html: cachedHtml, baseUrl: websiteUrl };
       }
       return { html: OFFLINE_HTML };
     }
-    return { uri: url };
+    return { uri: websiteUrl };
   };
 
   return (
-    <SafeAreaView style={styles.container} {...panResponder.panHandlers}>
+    <View style={styles.container} {...panResponder.panHandlers}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
       {pullDistance > 0 && (
         <View style={[styles.pullIndicator, { height: pullDistance }]}>
           <ActivityIndicator 
             size="small" 
-            color="#ffffff" 
+            color="#007AFF" 
             style={{ opacity: pullDistance / PULL_THRESHOLD }}
           />
           <Text style={[styles.pullText, { opacity: pullDistance / PULL_THRESHOLD }]}>
@@ -441,7 +408,7 @@ function WebViewScreen({ url }) {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#ffffff" />
+          <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       )}
@@ -487,33 +454,7 @@ function WebViewScreen({ url }) {
         url={browserUrl} 
         onClose={() => setShowBrowser(false)} 
       />
-    </SafeAreaView>
-  );
-}
-
-function AppNavigator() {
-  return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
-          const item = navItems.find(n => n.label === route.name);
-          return <Ionicons name={getIonIconName(item?.icon)} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#333' },
-        tabBarLabelStyle: { fontSize: 11 },
-      })}
-    >
-      {navItems.map((item, index) => (
-        <Tab.Screen 
-          key={index}
-          name={item.label} 
-          children={() => <WebViewScreen url={"https://smartfin.ask2mesolution.com" + item.url} />}
-        />
-      ))}
-    </Tab.Navigator>
+    </View>
   );
 }
 
@@ -526,9 +467,7 @@ export default function App() {
   
   return (
     <View style={{ flex: 1 }}>
-      <NavigationContainer>
-        <AppNavigator />
-      </NavigationContainer>
+      <MainContent />
       {showSplash && <CustomSplashScreen onFinish={handleSplashFinish} />}
     </View>
   );
@@ -543,6 +482,7 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -615,19 +555,5 @@ const styles = StyleSheet.create({
   },
   browserWebview: {
     flex: 1,
-  },
-  offlineIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ff6b6b',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  offlineText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });
