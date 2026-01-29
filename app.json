@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Ubenmusic",
-    "slug": "ubenmusic",
+    "name": "SmartFinance",
+    "slug": "smartfinance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,39 +16,27 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.uben.music"
+      "bundleIdentifier": "com.smartfin.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.uben.music"
+      "package": "com.smartfin.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "websiteUrl": "https://music.uben.in/",
+      "websiteUrl": "https://smartfin.ask2mesolution.com",
       "enableNavigation": true,
       "navItems": [
         {
           "id": "1",
-          "label": "Home",
-          "url": "/channel/top-trend",
-          "icon": "heart"
-        },
-        {
-          "id": "1769325070504",
-          "label": "Songtap",
-          "url": "https://songtap.uben.in/",
-          "icon": "music"
-        },
-        {
-          "id": "1769325071259",
-          "label": "Account",
-          "url": "/login",
-          "icon": "user"
+          "label": "Book",
+          "url": "https://ubenclick.neetoform.com/smartfinance",
+          "icon": "home"
         }
       ]
     }
