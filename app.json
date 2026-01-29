@@ -29,16 +29,9 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "websiteUrl": "https://smartfin.ask2mesolution.com",
-      "enableNavigation": true,
-      "navItems": [
-        {
-          "id": "1",
-          "label": "Book",
-          "url": "https://ubenclick.neetoform.com/smartfinance",
-          "icon": "home"
-        }
-      ]
+      "websiteUrl": "https://smartfin.ask2mesolution.com/",
+      "enableNavigation": false,
+      "navItems": []
     }
   }
 }
