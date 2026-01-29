@@ -12,13 +12,44 @@ import * as SplashScreen from 'expo-splash-screen';
 SplashScreen.preventAutoHideAsync();
 
 const Tab = createBottomTabNavigator();
-const navItems = [{"id":"1","label":"Home","url":"/channel/top-trend","icon":"heart"},{"id":"1769325070504","label":"Songtap","url":"https://songtap.uben.in/","icon":"music"},{"id":"1769325071259","label":"Account","url":"/login","icon":"user"}];
-const BASE_DOMAIN = 'music.uben.in';
+const navItems = [{"id":"1","label":"Book","url":"https://ubenclick.neetoform.com/smartfinance","icon":"home"}];
+const BASE_DOMAIN = 'smartfin.ask2mesolution.com';
 const SYNC_INTERVAL = 30000;
 const PULL_THRESHOLD = 150;
 const CACHE_KEY = 'OFFLINE_HTML_CACHE';
 const SPLASH_DURATION = 4000; // Show splash for 4 seconds
 const SPLASH_BG_COLOR = '#ffffff';
+const LOADING_TIMEOUT = 15000; // Force hide loading after 15 seconds
+
+// Icon mapping from Lucide to Ionicons
+const iconMap = {
+  'home': 'home',
+  'user': 'person',
+  'settings': 'settings',
+  'info': 'information-circle',
+  'menu': 'menu',
+  'cart': 'cart',
+  'search': 'search',
+  'notifications': 'notifications',
+  'heart': 'heart',
+  'mail': 'mail',
+  'calendar': 'calendar',
+  'camera': 'camera',
+  'music': 'musical-notes',
+  'video': 'videocam',
+  'map': 'map',
+  'phone': 'call',
+  'star': 'star',
+  'bookmark': 'bookmark',
+  'share': 'share-social',
+  'download': 'download',
+  'upload': 'cloud-upload',
+};
+
+const getIonIconName = (lucideIcon) => {
+  return iconMap[lucideIcon] || iconMap['home'] || 'home';
+};
+
 
 // Custom Splash Screen Component
 function CustomSplashScreen({ onFinish }) {
@@ -203,7 +234,7 @@ function InAppBrowser({ visible, url, onClose }) {
         </View>
         {browserLoading && (
           <View style={styles.browserLoading}>
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color="#ffffff" />
           </View>
         )}
         <WebView
@@ -256,6 +287,16 @@ function WebViewScreen({ url }) {
       if (html) setCachedHtml(html);
     });
   }, [url]);
+
+  // Loading timeout - force hide loading overlay after timeout
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        setLoading(false);
+      }, LOADING_TIMEOUT);
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
 
   // Cache HTML content for offline use
   const cachePageContent = useCallback(() => {
@@ -389,7 +430,7 @@ function WebViewScreen({ url }) {
         <View style={[styles.pullIndicator, { height: pullDistance }]}>
           <ActivityIndicator 
             size="small" 
-            color="#007AFF" 
+            color="#ffffff" 
             style={{ opacity: pullDistance / PULL_THRESHOLD }}
           />
           <Text style={[styles.pullText, { opacity: pullDistance / PULL_THRESHOLD }]}>
@@ -400,7 +441,7 @@ function WebViewScreen({ url }) {
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#ffffff" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       )}
@@ -457,9 +498,9 @@ function AppNavigator() {
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           const item = navItems.find(n => n.label === route.name);
-          return <Ionicons name={item?.icon || 'home'} size={size} color={color} />;
+          return <Ionicons name={getIonIconName(item?.icon)} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#007AFF',
+        tabBarActiveTintColor: '#ffffff',
         tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#333' },
         tabBarLabelStyle: { fontSize: 11 },
@@ -469,7 +510,7 @@ function AppNavigator() {
         <Tab.Screen 
           key={index}
           name={item.label} 
-          children={() => <WebViewScreen url={"https://music.uben.in/" + item.url} />}
+          children={() => <WebViewScreen url={"https://smartfin.ask2mesolution.com" + item.url} />}
         />
       ))}
     </Tab.Navigator>
