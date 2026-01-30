@@ -30,8 +30,23 @@
     },
     "extra": {
       "websiteUrl": "https://smartfin.ask2mesolution.com/",
-      "enableNavigation": false,
-      "navItems": []
+      "enableNavigation": true,
+      "navItems": [
+        {
+          "id": "1",
+          "label": "Request Quote",
+          "url": "https://ubenclick.neetoform.com/smartfinance",
+          "icon": "user",
+          "isExternal": true
+        },
+        {
+          "id": "1769795544052",
+          "label": "Our Product",
+          "url": "https://tinyurl.com/hpwabpjr",
+          "icon": "home",
+          "isExternal": true
+        }
+      ]
     }
   }
 }
