@@ -1,14 +1,19 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { StatusBar, StyleSheet, View, Text, ActivityIndicator, Platform, TouchableOpacity, Modal, BackHandler, Dimensions, PanResponder, Image, Animated } from 'react-native';
+import { StatusBar, StyleSheet, SafeAreaView, View, Text, ActivityIndicator, Platform, TouchableOpacity, Dimensions, Image, Animated, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
+import { InAppBrowser } from 'react-native-inappbrowser-reborn';
 
 // Prevent auto-hiding of splash screen
 SplashScreen.preventAutoHideAsync();
 
+const Tab = createBottomTabNavigator();
+const navItems = ${navItemsJson};
 const BASE_DOMAIN = 'smartfin.ask2mesolution.com';
 const SYNC_INTERVAL = 30000;
 const PULL_THRESHOLD = 150;
@@ -16,6 +21,77 @@ const CACHE_KEY = 'OFFLINE_HTML_CACHE';
 const SPLASH_DURATION = 4000; // Show splash for 4 seconds
 const SPLASH_BG_COLOR = '#ffffff';
 const LOADING_TIMEOUT = 15000; // Force hide loading after 15 seconds
+
+// Chromium In-App Browser Configuration
+const BROWSER_CONFIG = {
+  // Android Chrome Custom Tabs settings - uses Chromium engine
+  showTitle: true,
+  toolbarColor: '#1a1a1a',
+  secondaryToolbarColor: '#1a1a1a',
+  navigationBarColor: '#1a1a1a',
+  navigationBarDividerColor: '#333333',
+  enableUrlBarHiding: true,
+  enableDefaultShare: true,
+  forceCloseOnRedirection: false,
+  showInRecents: true,
+  hasBackButton: true,
+  // iOS Safari View Controller settings
+  dismissButtonStyle: 'close',
+  preferredBarTintColor: '#1a1a1a',
+  preferredControlTintColor: '#ffffff',
+  readerMode: false,
+  animated: true,
+  modalPresentationStyle: 'automatic',
+  modalTransitionStyle: 'coverVertical',
+  modalEnabled: true,
+  enableBarCollapsing: true,
+};
+
+// Helper function to open URL in Chromium-based in-app browser
+async function openInAppBrowser(url) {
+  try {
+    if (await InAppBrowser.isAvailable()) {
+      const result = await InAppBrowser.open(url, BROWSER_CONFIG);
+      console.log('Browser closed with result:', result.type);
+    } else {
+      // Fallback to system browser if in-app browser not available
+      Linking.openURL(url);
+    }
+  } catch (error) {
+    console.error('Error opening in-app browser:', error);
+    Linking.openURL(url);
+  }
+}
+
+// Icon mapping from Lucide to Ionicons
+const iconMap = {
+  'home': 'home',
+  'user': 'person',
+  'settings': 'settings',
+  'info': 'information-circle',
+  'menu': 'menu',
+  'cart': 'cart',
+  'search': 'search',
+  'notifications': 'notifications',
+  'heart': 'heart',
+  'mail': 'mail',
+  'calendar': 'calendar',
+  'camera': 'camera',
+  'music': 'musical-notes',
+  'video': 'videocam',
+  'map': 'map',
+  'phone': 'call',
+  'star': 'star',
+  'bookmark': 'bookmark',
+  'share': 'share-social',
+  'download': 'download',
+  'upload': 'cloud-upload',
+};
+
+const getIonIconName = (lucideIcon) => {
+  return iconMap[lucideIcon] || iconMap['home'] || 'home';
+};
+
 
 // Custom Splash Screen Component
 function CustomSplashScreen({ onFinish }) {
@@ -155,86 +231,32 @@ const OFFLINE_HTML = `
 </html>
 `;
 
-function InAppBrowser({ visible, url, onClose }) {
-  const [canGoBack, setCanGoBack] = useState(false);
-  const [browserLoading, setBrowserLoading] = useState(true);
-  const [currentUrl, setCurrentUrl] = useState(url);
-  const browserRef = useRef(null);
-
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (visible && canGoBack && browserRef.current) {
-        browserRef.current.goBack();
-        return true;
-      }
-      if (visible) {
-        onClose();
-        return true;
-      }
-      return false;
-    });
-    return () => backHandler.remove();
-  }, [visible, canGoBack, onClose]);
-
+// Legacy InAppBrowser component - kept for fallback, but primary is Chromium browser
+function InAppBrowserFallback({ visible, url, onClose }) {
+  // This is a fallback component - the main functionality now uses react-native-inappbrowser-reborn
+  // which provides Chrome Custom Tabs on Android and SFSafariViewController on iOS
   if (!visible) return null;
-
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.browserContainer}>
-        <View style={styles.browserHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.browserButton}>
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-          <View style={styles.browserUrlContainer}>
-            <Text style={styles.browserUrl} numberOfLines={1}>{currentUrl}</Text>
-          </View>
-          <TouchableOpacity 
-            onPress={() => canGoBack && browserRef.current?.goBack()} 
-            style={[styles.browserButton, !canGoBack && styles.browserButtonDisabled]}
-          >
-            <Ionicons name="arrow-back" size={24} color={canGoBack ? "#fff" : "#666"} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => browserRef.current?.reload()} style={styles.browserButton}>
-            <Ionicons name="refresh" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        {browserLoading && (
-          <View style={styles.browserLoading}>
-            <ActivityIndicator size="small" color="#007AFF" />
-          </View>
-        )}
-        <WebView
-          ref={browserRef}
-          source={{ uri: url }}
-          style={styles.browserWebview}
-          onNavigationStateChange={(navState) => {
-            setCanGoBack(navState.canGoBack);
-            setCurrentUrl(navState.url);
-          }}
-          onLoadStart={() => setBrowserLoading(true)}
-          onLoadEnd={() => setBrowserLoading(false)}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          cacheEnabled={true}
-          cacheMode="LOAD_CACHE_ELSE_NETWORK"
-        />
-      </View>
-    </Modal>
-  );
+  
+  // Use Chromium-based browser immediately
+  useEffect(() => {
+    if (visible && url) {
+      openInAppBrowser(url).then(() => {
+        onClose();
+      });
+    }
+  }, [visible, url, onClose]);
+  
+  return null;
 }
 
-function MainContent() {
+function WebViewScreen({ url }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [browserUrl, setBrowserUrl] = useState('');
-  const [showBrowser, setShowBrowser] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [pullDistance, setPullDistance] = useState(0);
+  const [showRefreshButton, setShowRefreshButton] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [cachedHtml, setCachedHtml] = useState(null);
   const webViewRef = useRef(null);
   const lastSyncRef = useRef(Date.now());
-  const websiteUrl = 'https://smartfin.ask2mesolution.com/';
 
   // Network connectivity monitoring
   useEffect(() => {
@@ -250,10 +272,10 @@ function MainContent() {
 
   // Load cached HTML on mount
   useEffect(() => {
-    AsyncStorage.getItem(CACHE_KEY + '_main').then(html => {
+    AsyncStorage.getItem(CACHE_KEY + '_' + url).then(html => {
       if (html) setCachedHtml(html);
     });
-  }, []);
+  }, [url]);
 
   // Loading timeout - force hide loading overlay after timeout
   useEffect(() => {
@@ -308,38 +330,21 @@ function MainContent() {
     return () => clearInterval(syncInterval);
   }, [loading, isOffline, cachePageContent]);
 
-  const handleRefresh = useCallback(() => {
-    if (scrollY <= 0 && pullDistance >= PULL_THRESHOLD) {
-      setRefreshing(true);
-      if (webViewRef.current) {
-        webViewRef.current.reload();
-      }
-      setTimeout(() => {
-        setRefreshing(false);
-        setPullDistance(0);
-      }, 1500);
+  // Manual refresh handler
+  const handleManualRefresh = useCallback(() => {
+    setRefreshing(true);
+    if (webViewRef.current) {
+      webViewRef.current.reload();
     }
-  }, [scrollY, pullDistance]);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  }, []);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return scrollY <= 0 && gestureState.dy > 10 && Math.abs(gestureState.dx) < 50;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (scrollY <= 0 && gestureState.dy > 0) {
-          setPullDistance(Math.min(gestureState.dy, PULL_THRESHOLD + 50));
-        }
-      },
-      onPanResponderRelease: () => {
-        if (pullDistance >= PULL_THRESHOLD) {
-          handleRefresh();
-        } else {
-          setPullDistance(0);
-        }
-      },
-    })
-  ).current;
+  // Show refresh button when scrolled to top
+  const handleScrollChange = useCallback((scrollY) => {
+    setShowRefreshButton(scrollY <= 50);
+  }, []);
 
   const handleNavigationRequest = (request) => {
     const requestUrl = request.url;
@@ -349,8 +354,8 @@ function MainContent() {
                          !requestUrl.startsWith('about:') && 
                          !requestUrl.startsWith('javascript:');
       if (isExternal) {
-        setBrowserUrl(requestUrl);
-        setShowBrowser(true);
+        // Open external links in Chromium-based in-app browser
+        openInAppBrowser(requestUrl);
         return false;
       }
     } catch (e) {}
@@ -359,10 +364,51 @@ function MainContent() {
 
   const injectedJS = `
     (function() {
+      // Scroll tracking
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll', y: window.scrollY }));
       window.addEventListener('scroll', function() {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'scroll', y: window.scrollY }));
       }, { passive: true });
+      
+      // Intercept all link clicks for in-app browser
+      document.addEventListener('click', function(e) {
+        var target = e.target;
+        while (target && target.tagName !== 'A') {
+          target = target.parentElement;
+        }
+        if (target && target.tagName === 'A') {
+          var href = target.getAttribute('href');
+          if (href && !href.startsWith('javascript:') && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+            try {
+              var fullUrl = new URL(href, window.location.origin).href;
+              var baseDomain = 'smartfin.ask2mesolution.com';
+              var linkHostname = new URL(fullUrl).hostname;
+              if (!linkHostname.includes(baseDomain)) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'external_link', url: fullUrl }));
+              }
+            } catch (err) {}
+          }
+        }
+      }, true);
+      
+      // Also intercept window.open calls
+      var originalOpen = window.open;
+      window.open = function(url, target, features) {
+        if (url) {
+          try {
+            var fullUrl = new URL(url, window.location.origin).href;
+            var baseDomain = 'smartfin.ask2mesolution.com';
+            var linkHostname = new URL(fullUrl).hostname;
+            if (!linkHostname.includes(baseDomain)) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'external_link', url: fullUrl }));
+              return null;
+            }
+          } catch (err) {}
+        }
+        return originalOpen.call(window, url, target, features);
+      };
     })();
     true;
   `;
@@ -371,10 +417,13 @@ function MainContent() {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'scroll') {
-        setScrollY(data.y);
+        handleScrollChange(data.y);
       } else if (data.type === 'cache' && data.html) {
-        AsyncStorage.setItem(CACHE_KEY + '_main', data.html);
+        AsyncStorage.setItem(CACHE_KEY + '_' + url, data.html);
         setCachedHtml(data.html);
+      } else if (data.type === 'external_link' && data.url) {
+        // Open external links in Chromium-based in-app browser
+        openInAppBrowser(data.url);
       }
     } catch (e) {}
   };
@@ -382,33 +431,20 @@ function MainContent() {
   const getWebViewSource = () => {
     if (isOffline) {
       if (cachedHtml) {
-        return { html: cachedHtml, baseUrl: websiteUrl };
+        return { html: cachedHtml, baseUrl: url };
       }
       return { html: OFFLINE_HTML };
     }
-    return { uri: websiteUrl };
+    return { uri: url };
   };
 
   return (
-    <View style={styles.container} {...panResponder.panHandlers}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      
-      {pullDistance > 0 && (
-        <View style={[styles.pullIndicator, { height: pullDistance }]}>
-          <ActivityIndicator 
-            size="small" 
-            color="#007AFF" 
-            style={{ opacity: pullDistance / PULL_THRESHOLD }}
-          />
-          <Text style={[styles.pullText, { opacity: pullDistance / PULL_THRESHOLD }]}>
-            {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull down to refresh'}
-          </Text>
-        </View>
-      )}
 
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#ffffff" />
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
       )}
@@ -423,7 +459,7 @@ function MainContent() {
       <WebView
         ref={webViewRef}
         source={getWebViewSource()}
-        style={[styles.webview, { marginTop: pullDistance }]}
+        style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         startInLoadingState={false}
@@ -449,12 +485,79 @@ function MainContent() {
         onHttpError={() => setIsOffline(true)}
       />
 
-      <InAppBrowser 
-        visible={showBrowser} 
-        url={browserUrl} 
-        onClose={() => setShowBrowser(false)} 
-      />
-    </View>
+      {/* Floating Refresh Button */}
+      {showRefreshButton && !loading && (
+        <TouchableOpacity 
+          style={styles.refreshButton} 
+          onPress={handleManualRefresh}
+          activeOpacity={0.8}
+        >
+          {refreshing ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="refresh" size={22} color="#fff" />
+          )}
+        </TouchableOpacity>
+      )}
+    </SafeAreaView>
+  );
+}
+
+// External Link Screen - opens external URL in Chromium-based in-app browser
+function ExternalLinkScreen({ url, label }) {
+  // Open in Chromium browser when component mounts or when button is pressed
+  const handleOpenBrowser = useCallback(() => {
+    openInAppBrowser(url);
+  }, [url]);
+  
+  // Auto-open on mount
+  useEffect(() => {
+    handleOpenBrowser();
+  }, [handleOpenBrowser]);
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <View style={styles.externalPlaceholder}>
+        <Ionicons name="globe-outline" size={48} color="#ffffff" />
+        <Text style={styles.externalText}>{label}</Text>
+        <TouchableOpacity 
+          style={styles.openExternalButton}
+          onPress={handleOpenBrowser}
+        >
+          <Text style={styles.openExternalButtonText}>Open Link</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function AppNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          const item = navItems.find(n => n.label === route.name);
+          return <Ionicons name={getIonIconName(item?.icon)} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: '#8E8E93',
+        tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#333' },
+        tabBarLabelStyle: { fontSize: 11 },
+      })}
+    >
+      {navItems.map((item, index) => (
+        <Tab.Screen 
+          key={index}
+          name={item.label} 
+          children={() => item.isExternal 
+            ? <ExternalLinkScreen url={item.url} label={item.label} />
+            : <WebViewScreen url={"https://smartfin.ask2mesolution.com/" + item.url} />
+          }
+        />
+      ))}
+    </Tab.Navigator>
   );
 }
 
@@ -467,7 +570,9 @@ export default function App() {
   
   return (
     <View style={{ flex: 1 }}>
-      <MainContent />
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
       {showSplash && <CustomSplashScreen onFinish={handleSplashFinish} />}
     </View>
   );
@@ -482,7 +587,6 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -500,20 +604,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
   },
-  pullIndicator: {
+  refreshButton: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1a1a1a',
+    top: Platform.OS === 'ios' ? 100 : 80,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     zIndex: 100,
-  },
-  pullText: {
-    color: '#fff',
-    fontSize: 12,
-    marginTop: 5,
   },
   browserContainer: {
     flex: 1,
@@ -555,5 +661,43 @@ const styles = StyleSheet.create({
   },
   browserWebview: {
     flex: 1,
+  },
+  offlineIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ff6b6b',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  offlineText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  externalPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    gap: 16,
+  },
+  externalText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  openExternalButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  openExternalButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
