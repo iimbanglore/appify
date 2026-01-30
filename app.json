@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "SmartFinance",
-    "slug": "smartfinance",
+    "name": "WebView App",
+    "slug": "webview-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -16,37 +16,17 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.smartfin.app"
+      "bundleIdentifier": "com.app.webview"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.smartfin.app"
+      "package": "com.app.webview"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "websiteUrl": "https://smartfin.ask2mesolution.com/",
-      "enableNavigation": true,
-      "navItems": [
-        {
-          "id": "1",
-          "label": "Request Quote",
-          "url": "https://ubenclick.neetoform.com/smartfinance",
-          "icon": "user",
-          "isExternal": true
-        },
-        {
-          "id": "1769795544052",
-          "label": "Our Product",
-          "url": "https://tinyurl.com/hpwabpjr",
-          "icon": "home",
-          "isExternal": true
-        }
-      ]
     }
   }
 }
