@@ -36,14 +36,14 @@
           "id": "1",
           "label": "Request Quote",
           "url": "https://ubenclick.neetoform.com/smartfinance",
-          "icon": "home",
+          "icon": "user",
           "isExternal": true
         },
         {
-          "id": "1769801832366",
+          "id": "1769844771049",
           "label": "Explore Product",
           "url": "https://tinyurl.com/hpwabpjr",
-          "icon": "user",
+          "icon": "home",
           "isExternal": true
         }
       ]
