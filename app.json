@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.smartfin.app"
+      "bundleIdentifier": "com.smartfin.uben"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.smartfin.app"
+      "package": "com.smartfin.uben"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,16 +34,16 @@
       "navItems": [
         {
           "id": "1",
-          "label": "Request Quote",
+          "label": "Request a Quote",
           "url": "https://ubenclick.neetoform.com/smartfinance",
-          "icon": "user",
+          "icon": "home",
           "isExternal": true
         },
         {
-          "id": "1769844771049",
+          "id": "1769947491959",
           "label": "Explore Product",
           "url": "https://tinyurl.com/hpwabpjr",
-          "icon": "home",
+          "icon": "menu",
           "isExternal": true
         }
       ]
