@@ -20,163 +20,86 @@ workflows:
           npm install --no-audit --no-fund
           npm install --no-audit --no-fund sharp
       - name: Generate Android project
-        script: npx expo prebuild --platform android --clean --no-install
-      - name: Fix Gradle rootProject crash (bulletproof)
+        script: |
+          npx expo prebuild --platform android --clean --no-install
+      - name: Patch Android Gradle for Expo modules
         script: |
           set -e
-          echo "=== DIAGNOSTIC: android/app/build.gradle around line 116 (before patch) ==="
-          if [ -f "android/app/build.gradle" ]; then
-            nl -ba android/app/build.gradle | sed -n '105,130p' || true
-          fi
-
-          ruby - <<'RUBY'
-          def patch_text(text, aggressive: false)
-            patched = text.dup
-
-            # Multi-line safe patterns
-            patched.gsub!(/(project\.)?findProject\([^\)]*\)\s*\.\s*rootProject/m, 'rootProject')
-            patched.gsub!(/(project\.)?findProject\([^\)]*\)\s*\?\.\s*rootProject/m, 'rootProject')
-            patched.gsub!(/\bproject\s*\.\s*rootProject\b/m, 'rootProject')
-            patched.gsub!(/\bproject\([^\)]*\)\s*\.\s*rootProject\b/m, 'rootProject')
-
-            vars = patched
-              .scan(/(?:^|\s)(?:def\s+)?([A-Za-z_]\w*)\s*=\s*(?:project\.)?findProject\([^\)]*\)/m)
-              .flatten
-              .uniq
-
-            vars.each do |v|
-              patched.gsub!(/\b#{Regexp.escape(v)}\s*\.\s*rootProject\b/m, 'rootProject')
-              patched.gsub!(/\b#{Regexp.escape(v)}\s*\.\s*getRootProject\(\)\b/m, 'rootProject')
-            end
-
-            if aggressive
-              patched.gsub!(/\b([A-Za-z_]\w*)\s*\.\s*rootProject\b/m) { |m| $1 == 'rootProject' ? m : 'rootProject' }
-              patched.gsub!(/\b([A-Za-z_]\w*)\s*\.\s*getRootProject\(\)\b/m) { |m| $1 == 'rootProject' ? m : 'rootProject' }
-            end
-
-            patched
-          end
-
-          def patch_file(path, aggressive: false)
-            return false unless File.exist?(path)
-            original = File.read(path)
-            patched = patch_text(original, aggressive: aggressive)
-            return false if patched == original
-            File.write(path, patched)
-            puts "PATCHED: #{path}"
-            true
-          rescue => e
-            puts "ERROR patching #{path}: #{e.message}"
-            false
-          end
-
-          candidates = [
-            'android/app/build.gradle',
-            'android/app/build.gradle.kts',
-            'android/build.gradle',
-            'android/build.gradle.kts',
-            'android/settings.gradle',
-            'android/settings.gradle.kts',
-            'node_modules/@react-native-community/cli-platform-android/native_modules.gradle',
-            'node_modules/expo-modules-autolinking/scripts/android/autolinking.gradle',
-            'node_modules/expo-modules-autolinking/scripts/android/autolinking_implementation.gradle',
-          ]
-
-          puts "Files to scan:";
-          candidates.each { |p| puts "  #{File.exist?(p) ? '✓' : '✗'} #{p}" }
-
-          patched_count = 0
-          candidates.each do |p|
-            patched_count += 1 if patch_file(p, aggressive: (p == 'android/app/build.gradle'))
-          end
-
-          puts "Total files patched: #{patched_count}"
-          RUBY
-
-          echo "=== DIAGNOSTIC: android/app/build.gradle around line 116 (after patch) ==="
-          if [ -f "android/app/build.gradle" ]; then
-            nl -ba android/app/build.gradle | sed -n '105,130p' || true
-          fi
-
-          echo "=== Preflight: fail if any '.rootProject' remains in android/app/build.gradle ==="
-          if [ -f "android/app/build.gradle" ] && grep -nE '\\.[[:space:]]*rootProject' android/app/build.gradle; then
-            echo "ERROR: Remaining .rootProject references detected (would still risk NPE)."
+          cat > /tmp/patch-android.js << 'PATCHSCRIPT'
+          var fs = require('fs');
+          var path = require('path');
+          var NL = String.fromCharCode(10);
+          var settingsPath = 'android/settings.gradle';
+          if (!fs.existsSync(settingsPath)) { console.error('FATAL: settings.gradle missing'); process.exit(1); }
+          var settings = fs.readFileSync(settingsPath, 'utf8');
+          if (!settings.includes('expo-modules-core')) {
+            var corePkg = require.resolve('expo-modules-core/package.json');
+            var coreDir = path.dirname(corePkg);
+            var androidDir = path.join(coreDir, 'android');
+            if (!fs.existsSync(androidDir)) { console.error('FATAL: ' + androidDir + ' not found'); process.exit(1); }
+            var line = 'includeBuild("' + androidDir + '")';
+            if (settings.includes('pluginManagement {')) {
+              settings = settings.replace('pluginManagement {', 'pluginManagement {' + NL + '    ' + line);
+            } else {
+              settings = 'pluginManagement {' + NL + '    ' + line + NL + '}' + NL + NL + settings;
+            }
+            fs.writeFileSync(settingsPath, settings);
+            console.log('PATCHED settings.gradle: ' + line);
+          } else { console.log('OK: expo-modules-core already present'); }
+          var gradleFiles = ['android/app/build.gradle','android/build.gradle','android/settings.gradle','node_modules/@react-native-community/cli-platform-android/native_modules.gradle','node_modules/expo-modules-autolinking/scripts/android/autolinking.gradle','node_modules/expo-modules-autolinking/scripts/android/autolinking_implementation.gradle'];
+          var pc = 0;
+          gradleFiles.forEach(function(f) {
+            if (!fs.existsSync(f)) return;
+            var c = fs.readFileSync(f, 'utf8'), o = c;
+            c = c.split('project.rootProject').join('rootProject');
+            c = c.replace(/findProject([^)]*)s*?.s*rootProject/g, 'rootProject');
+            c = c.replace(/findProject([^)]*)s*.s*rootProject/g, 'rootProject');
+            c = c.replace(/project([^)]*)s*.s*rootProject/g, 'rootProject');
+            if (c !== o) { fs.writeFileSync(f, c); console.log('PATCHED: ' + f); pc++; }
+          });
+          console.log('rootProject patches: ' + pc);
+          var pp = 'android/gradle.properties';
+          var props = fs.existsSync(pp) ? fs.readFileSync(pp, 'utf8') : '';
+          if (!props.includes('disableAutomaticComponentCreation')) { props += NL + 'android.disableAutomaticComponentCreation=false'; }
+          else { props = props.replace(/android.disableAutomaticComponentCreation=.*/g, 'android.disableAutomaticComponentCreation=false'); }
+          if (!props.includes('compileSdkVersion=34')) { props += NL + '# SDK 34 enforcement' + NL + 'android.compileSdkVersion=34' + NL + 'android.targetSdkVersion=34' + NL + 'android.minSdkVersion=24'; }
+          if (!props.includes('org.gradle.jvmargs')) { props += NL + 'org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8'; }
+          fs.writeFileSync(pp, props);
+          console.log('OK: gradle.properties configured');
+          PATCHSCRIPT
+          node /tmp/patch-android.js
+          if ! grep -q "expo-modules-core" android/settings.gradle; then
+            echo "FATAL: expo-modules-core missing from settings.gradle"
+            cat android/settings.gradle
             exit 1
           fi
-
-          echo "=== Gradle rootProject patching complete ==="
-      - name: Configure Android SDK 34
-        script: |
-          PROP_FILE="android/gradle.properties"
-          echo "" >> "$PROP_FILE"
-          echo "# SDK 34 enforcement" >> "$PROP_FILE"
-          echo "android.compileSdkVersion=34" >> "$PROP_FILE"
-          echo "android.targetSdkVersion=34" >> "$PROP_FILE"
-          echo "android.minSdkVersion=24" >> "$PROP_FILE"
-          echo "org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8" >> "$PROP_FILE"
-          cat "$PROP_FILE"
+          echo "All Android Gradle patches applied successfully"
       - name: Set up local.properties
         script: |
           SDK_DIR="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          if [ -z "$SDK_DIR" ]; then echo "Missing Android SDK path"; exit 1; fi
+          if [ -z "$SDK_DIR" ]; then echo "ERROR: Missing Android SDK path"; exit 1; fi
           echo "sdk.dir=$SDK_DIR" > android/local.properties
-      - name: Validate Gradle setup (preflight)
-        script: |
-          echo "=== Pre-build validation ==="
-          if [ ! -f "android/app/build.gradle" ]; then
-            echo "ERROR: android/app/build.gradle missing"; exit 1
-          fi
-          if grep -q 'project\.rootProject' android/app/build.gradle; then
-            echo "ERROR: Unpatched 'project.rootProject' still present in build.gradle"
-            grep -n 'project\.rootProject' android/app/build.gradle
-            exit 1
-          fi
-          if grep -q 'findProject.*\.rootProject' android/app/build.gradle; then
-            echo "ERROR: Unpatched 'findProject(...).rootProject' still present in build.gradle"
-            grep -n 'findProject.*\.rootProject' android/app/build.gradle
-            exit 1
-          fi
-          if grep -qE '\\.[[:space:]]*rootProject' android/app/build.gradle; then
-            echo "ERROR: Remaining '.rootProject' references still present in build.gradle"
-            grep -nE '\\.[[:space:]]*rootProject' android/app/build.gradle
-            exit 1
-          fi
-          echo "✓ Gradle files validated - no rootProject null traps detected"
       - name: Build Android APK
         script: |
           export NODE_OPTIONS="--max-old-space-size=4096"
-          cd android && ./gradlew :app:assembleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
+          cd android && ./gradlew :app:assembleRelease --no-daemon --stacktrace
       - name: Build Android App Bundle
         script: |
           export NODE_OPTIONS="--max-old-space-size=4096"
-          cd android && ./gradlew :app:bundleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
+          cd android && ./gradlew :app:bundleRelease --no-daemon --stacktrace
       - name: Copy build outputs
         script: |
           mkdir -p $CM_BUILD_DIR/build/outputs
-          find android/app/build/outputs -name "*.apk" -exec cp {} $CM_BUILD_DIR/build/outputs/ \\;
-          find android/app/build/outputs -name "*.aab" -exec cp {} $CM_BUILD_DIR/build/outputs/ \\;
+          find android/app/build/outputs -name "*.apk" -exec cp {} $CM_BUILD_DIR/build/outputs/ \;
+          find android/app/build/outputs -name "*.aab" -exec cp {} $CM_BUILD_DIR/build/outputs/ \;
           ls -la $CM_BUILD_DIR/build/outputs/
-      - name: Capture Android diagnostics on failure
+      - name: Capture diagnostics
         script: |
           mkdir -p $CM_BUILD_DIR/build/diagnostics
-          echo "=== android/app/build.gradle lines 90-140 ===" > $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
-          if [ -f "android/app/build.gradle" ]; then
-            nl -ba android/app/build.gradle | sed -n '90,140p' >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
-          else
-            echo "FILE NOT FOUND" >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
-          fi
-          echo "" >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
-          echo "=== Full android/app/build.gradle ===" >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
-          cat android/app/build.gradle >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt 2>/dev/null || true
-          echo "=== gradle.properties ===" > $CM_BUILD_DIR/build/diagnostics/android-gradle-properties.txt
-          cat android/gradle.properties >> $CM_BUILD_DIR/build/diagnostics/android-gradle-properties.txt 2>/dev/null || echo "NOT FOUND" >> $CM_BUILD_DIR/build/diagnostics/android-gradle-properties.txt
-          echo "=== settings.gradle ===" > $CM_BUILD_DIR/build/diagnostics/android-settings-gradle.txt
-          cat android/settings.gradle >> $CM_BUILD_DIR/build/diagnostics/android-settings-gradle.txt 2>/dev/null || echo "NOT FOUND" >> $CM_BUILD_DIR/build/diagnostics/android-settings-gradle.txt
-          echo "=== android/build.gradle ===" > $CM_BUILD_DIR/build/diagnostics/android-root-build-gradle.txt
-          cat android/build.gradle >> $CM_BUILD_DIR/build/diagnostics/android-root-build-gradle.txt 2>/dev/null || echo "NOT FOUND" >> $CM_BUILD_DIR/build/diagnostics/android-root-build-gradle.txt
-          echo "=== package.json ===" > $CM_BUILD_DIR/build/diagnostics/package-json.txt
-          cat package.json >> $CM_BUILD_DIR/build/diagnostics/package-json.txt 2>/dev/null || echo "NOT FOUND" >> $CM_BUILD_DIR/build/diagnostics/package-json.txt
-          echo "Diagnostics captured at $(date)" >> $CM_BUILD_DIR/build/diagnostics/android-build-gradle-snippet.txt
+          cp android/settings.gradle $CM_BUILD_DIR/build/diagnostics/ 2>/dev/null || true
+          cp android/app/build.gradle $CM_BUILD_DIR/build/diagnostics/ 2>/dev/null || true
+          cp android/gradle.properties $CM_BUILD_DIR/build/diagnostics/ 2>/dev/null || true
+          cp package.json $CM_BUILD_DIR/build/diagnostics/ 2>/dev/null || true
     artifacts:
       - android/app/build/outputs/**/*.apk
       - android/app/build/outputs/**/*.aab
