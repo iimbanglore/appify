@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "cover",
+      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": [
@@ -29,31 +29,9 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "websiteUrl": "https://fin.uben.in/terminal",
-      "enableNavigation": true,
-      "navItems": [
-        {
-          "id": "1",
-          "label": "Home",
-          "url": "https://fin.uben.in/",
-          "icon": "home",
-          "isExternal": true
-        },
-        {
-          "id": "1784202860378",
-          "label": "Terminal",
-          "url": "https://fin.uben.in/terminal",
-          "icon": "menu",
-          "isExternal": true
-        },
-        {
-          "id": "1784202961280",
-          "label": "Account",
-          "url": "https://fin.uben.in/auth",
-          "icon": "user",
-          "isExternal": true
-        }
-      ]
+      "websiteUrl": "",
+      "enableNavigation": false,
+      "navItems": []
     }
   }
 }
