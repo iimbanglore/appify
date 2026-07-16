@@ -11,7 +11,7 @@ workflows:
       groups:
         - app_credentials
       vars:
-        PACKAGE_NAME: com.app.webview
+        PACKAGE_NAME: com.uben.finity
       node: 18.17.0
       java: "17"
     scripts:
@@ -29,13 +29,14 @@ workflows:
           var fs = require('fs');
           var path = require('path');
           var NL = String.fromCharCode(10);
+
+          // 1. Fix expo-module-gradle-plugin resolution
           var settingsPath = 'android/settings.gradle';
           if (!fs.existsSync(settingsPath)) { console.error('FATAL: settings.gradle missing'); process.exit(1); }
           var settings = fs.readFileSync(settingsPath, 'utf8');
+
           if (!settings.includes('expo-modules-core')) {
-            var corePkg = require.resolve('expo-modules-core/package.json');
-            var coreDir = path.dirname(corePkg);
-            var androidDir = path.join(coreDir, 'android');
+            var androidDir = path.join(process.cwd(), 'node_modules', 'expo-modules-core', 'android');
             if (!fs.existsSync(androidDir)) { console.error('FATAL: ' + androidDir + ' not found'); process.exit(1); }
             var line = 'includeBuild("' + androidDir + '")';
             if (settings.includes('pluginManagement {')) {
@@ -45,8 +46,19 @@ workflows:
             }
             fs.writeFileSync(settingsPath, settings);
             console.log('PATCHED settings.gradle: ' + line);
-          } else { console.log('OK: expo-modules-core already present'); }
-          var gradleFiles = ['android/app/build.gradle','android/build.gradle','android/settings.gradle','node_modules/@react-native-community/cli-platform-android/native_modules.gradle','node_modules/expo-modules-autolinking/scripts/android/autolinking.gradle','node_modules/expo-modules-autolinking/scripts/android/autolinking_implementation.gradle'];
+          } else {
+            console.log('OK: expo-modules-core already present');
+          }
+
+          // 2. Fix rootProject null pointer references
+          var gradleFiles = [
+            'android/app/build.gradle',
+            'android/build.gradle',
+            'android/settings.gradle',
+            'node_modules/@react-native-community/cli-platform-android/native_modules.gradle',
+            'node_modules/expo-modules-autolinking/scripts/android/autolinking.gradle',
+            'node_modules/expo-modules-autolinking/scripts/android/autolinking_implementation.gradle'
+          ];
           var pc = 0;
           gradleFiles.forEach(function(f) {
             if (!fs.existsSync(f)) return;
@@ -58,16 +70,27 @@ workflows:
             if (c !== o) { fs.writeFileSync(f, c); console.log('PATCHED: ' + f); pc++; }
           });
           console.log('rootProject patches: ' + pc);
+
+          // 3. Configure gradle.properties
           var pp = 'android/gradle.properties';
           var props = fs.existsSync(pp) ? fs.readFileSync(pp, 'utf8') : '';
-          if (!props.includes('disableAutomaticComponentCreation')) { props += NL + 'android.disableAutomaticComponentCreation=false'; }
-          else { props = props.replace(/android.disableAutomaticComponentCreation=.*/g, 'android.disableAutomaticComponentCreation=false'); }
-          if (!props.includes('compileSdkVersion=34')) { props += NL + '# SDK 34 enforcement' + NL + 'android.compileSdkVersion=34' + NL + 'android.targetSdkVersion=34' + NL + 'android.minSdkVersion=24'; }
-          if (!props.includes('org.gradle.jvmargs')) { props += NL + 'org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8'; }
+          if (!props.includes('disableAutomaticComponentCreation')) {
+            props += NL + 'android.disableAutomaticComponentCreation=false';
+          } else {
+            props = props.replace(/android.disableAutomaticComponentCreation=.*/g, 'android.disableAutomaticComponentCreation=false');
+          }
+          if (!props.includes('compileSdkVersion=34')) {
+            props += NL + '# SDK 34 enforcement' + NL + 'android.compileSdkVersion=34' + NL + 'android.targetSdkVersion=34' + NL + 'android.minSdkVersion=24';
+          }
+          if (!props.includes('org.gradle.jvmargs')) {
+            props += NL + 'org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8';
+          }
           fs.writeFileSync(pp, props);
           console.log('OK: gradle.properties configured');
           PATCHSCRIPT
+
           node /tmp/patch-android.js
+
           if ! grep -q "expo-modules-core" android/settings.gradle; then
             echo "FATAL: expo-modules-core missing from settings.gradle"
             cat android/settings.gradle
@@ -122,7 +145,7 @@ workflows:
       groups:
         - app_credentials
       vars:
-        BUNDLE_ID: com.app.webview
+        BUNDLE_ID: com.uben.finity
       node: 18.17.0
       xcode: 16.2
       cocoapods: default
@@ -239,7 +262,7 @@ workflows:
           cd $CM_BUILD_DIR/build/App.xcarchive/Products/Applications
           mkdir -p Payload
           cp -r *.app Payload/
-          zip -r $CM_BUILD_DIR/build/ipa/App.ipa Payload
+          zip -r $CM_BUILD_DIR/build/ipa/FinityAI.ipa Payload
       - name: Capture iOS diagnostics on failure
         script: |
           mkdir -p $CM_BUILD_DIR/build/diagnostics
@@ -253,9 +276,9 @@ workflows:
           echo "=== Workspace schemes ===" > $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt
           cd ios
           for ws in *.xcworkspace; do
-            if [ -d "\$ws" ] && [ "\$ws" != "Pods.xcworkspace" ]; then
-              echo "Workspace: \$ws" >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt
-              xcodebuild -list -json -workspace "\$ws" 2>/dev/null >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt || echo "Could not list schemes" >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt
+            if [ -d "$ws" ] && [ "$ws" != "Pods.xcworkspace" ]; then
+              echo "Workspace: $ws" >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt
+              xcodebuild -list -json -workspace "$ws" 2>/dev/null >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt || echo "Could not list schemes" >> $CM_BUILD_DIR/build/diagnostics/ios-schemes.txt
             fi
           done
           cd ..
